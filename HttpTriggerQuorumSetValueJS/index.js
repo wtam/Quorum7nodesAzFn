@@ -34,27 +34,33 @@ SimpleStorage.defaults({from: account_one});
 module.exports = function (context, req) {
     context.log('JavaScript HTTP trigger function processed a request.');
     //context.log(SimpleStorage);
+    var TxnResult = undefined;  //TxnResult for display
     if (req.query.value || (req.body && req.body.value)) {
-        context.log("Setting value " + req.body.value + " to Azure Quroum7nodes.....")
-        set(req.body.value)
-        //retrieve the stored value
-        context.log("StoredValue : " + get());
-        context.res = {
-            // status: 200, /* Defaults to 200 */
-            body: "Set Value " + (req.query.value || req.body.value)
-        };
-    }
-    else {
+        context.log("Setting value " + req.body.value + " to Azure Quroum7nodes.....")       
+        set(req.body.value);
+
+       //retrieve the stored value  //comment our as context.done call moved to end of set fn
+        //get()
+    } else {
         context.res = {
             status: 400,
-            body: "Please pass a name on the query string or in the request body"
+            body: "Please pass the set value in the request body"
         };
     }
     
     function set (storeValue) {
         context.log("Initiating transaction to set value: " + req.body.value + " ,private to Node 1 & 7....");
         SimpleStorage.deployed().then(function(instance) {
-            return instance.set(storeValue, {privateFor: ["ROAZBWtSacxXQrOe3FGAqJDyJjFePR5ce4TSIzmJ0Bc="]});
+            return instance.set(storeValue, {privateFor: ["ROAZBWtSacxXQrOe3FGAqJDyJjFePR5ce4TSIzmJ0Bc="]})
+                .then (function(result) {
+                    this.TxnResult = result; 
+                    context.log(this.TxnResult);
+                    context.res = {
+                        // status: 200, /* Defaults to 200 */
+                        body: "Txn: " + JSON.stringify(this.TxnResult)
+                    };
+                    context.done();
+                });
         }).catch(function(e) {
             context.log(e);
             context.log("Error setting storage value; see log." + e);
@@ -63,10 +69,11 @@ module.exports = function (context, req) {
 
     function get () { 
         SimpleStorage.deployed().then(function(instance) {
-            return instance.get();            
+            return instance.get().then(context.log) 
         }).catch(function(e) {
             context.log("Error getting storage value; see log." + e);
         }); 
     }
-    context.done();
+
+    //context.done();  //move to end of set fn to ensure the context.res output is sync
 };

@@ -1,3 +1,4 @@
+//  Get method only
 const contract = require('truffle-contract');
  
 // smart contract artifact
@@ -14,27 +15,29 @@ SimpleStorage.setProvider(new web3.providers.HttpProvider('http://quorumdemo7nod
 var account_one = "0xed9d02e382b34818e88b88a309c7fe71e65f419d"; // node1 acct key. Refer to /quorum-examples/examples/7nodes/keys$
 SimpleStorage.defaults({from: account_one});
 
+var storedValue = null;
+
 module.exports = function (context, req) {
     context.log('JavaScript HTTP trigger function processed a request.');
-    //context.log(SimpleStorage)
-    context.log("Getting value from Azure Quroum7nodes : " + get())
-    context.res = {
-        // status: 200, /* Defaults to 200 */
-        body: "Get Value: " + storedValue
-    }
-    else {
-        context.res = {
-            status: 400,
-            body: "Please pass a name on the query string or in the request body"
-        };
-    }
+    //context.log(SimpleStorage);   
+    context.log("Getting stored value from Azure Quroum7nodes....")
+    get();
+    
 
     function get () { 
         SimpleStorage.deployed().then(function(instance) {
-            return instance.get();
+            return instance.get().then(function(returnValue) {
+                context.log(returnValue);
+                this.storedValue = returnValue;
+                context.res = {
+                    // status: 200, /* Defaults to 200  if success*/ 
+                    body: "Stored Value(Quorum7nodes): " + this.storedValue
+                }
+                context.done();
+            })
         }).catch(function(e) {
             context.log("Error getting storage value; see log." + e);
         }); 
     }
-    context.done();
+    //context.done();
 };
