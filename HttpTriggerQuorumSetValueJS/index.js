@@ -1,8 +1,9 @@
 // use Kudu:
-// npm install -g truffle
-// npm install -g ethereumjs-testrpc
-// npm install truffle-contract
-// npm install -g ethereum.js   Note: Don't use web3 or Truffle-Procvider as its has tons of issue during npm install on windows os
+// cd D:\home\site\wwwroot>
+// npm install -g truffle --save
+// npm install ethereumjs-testrpc --save
+// npm install -g truffle-contract --save
+// npm install ethereum.js --save  Note: Don't use web3 or Truffle-Procvider as its has tons of issue during npm install on windows os
 
 // Preparation before running this AzFn for the 1st time!
 // Use Kudu: Truffle to deploy the contract:
@@ -18,7 +19,7 @@
 const contract = require('truffle-contract');
  
 // smart contract artifact
-const simpleStorage_json = require('../../../build/contracts/SimpleStorage.json')
+const simpleStorage_json = require('../build/contracts/SimpleStorage.json')
 
 // ABI abstraction
 const SimpleStorage = contract(simpleStorage_json);

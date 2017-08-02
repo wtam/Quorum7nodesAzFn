@@ -2,7 +2,7 @@
 const contract = require('truffle-contract');
  
 // smart contract artifact
-const simpleStorage_json = require('../../../build/contracts/SimpleStorage.json')
+const simpleStorage_json = require('../build/contracts/SimpleStorage.json')
 
 // ABI abstraction
 const SimpleStorage = contract(simpleStorage_json);
