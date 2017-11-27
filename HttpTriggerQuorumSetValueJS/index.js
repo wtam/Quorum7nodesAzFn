@@ -13,8 +13,9 @@
 // Use Kudu: Run below Txn and check from truffle console for the value
 // set request body t0 { "value": "7"} or whatever the number
 // cd migrations folder
-// truffle consle or --network nodetwo-six, nodeseven to chjeck, only nodeone and nodeseven can see it
-// SimpleStorage.deployed().then(function(instance) { return instance.get(); })
+// truffle console or truffle console --network nodetwo-six, nodeseven to check, only nodeone and nodeseven can see it
+// Set Value:  SimpleStorage.deployed().then(function(instance) {return instance.set(40, {privateFor: ["ROAZBWtSacxXQrOe3FGAqJDyJjFePR5ce4TSIzmJ0Bc="]})})
+// Get Value:  SimpleStorage.deployed().then(function(instance) { return instance.get(); })
 
 const contract = require('truffle-contract');
  

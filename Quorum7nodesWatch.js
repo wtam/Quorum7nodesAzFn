@@ -28,11 +28,9 @@ const contract = require('truffle-contract');
  
 // smart contract artifact
 const simpleStorage_json = require('./build/contracts/SimpleStorage.json')
-
 // ABI abstraction
 const SimpleStorage = contract(simpleStorage_json);
-
-///console.log(SimpleStorage);
+//console.log(SimpleStorage);
 
 //Set the Web3 HttpProvider in Truffle-Contract
 var web3 = require('ethereum.js');
