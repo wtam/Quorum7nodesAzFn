@@ -1,0 +1,46 @@
+look at step 6 and run in Git Shell!!!!!!
+
+https://docs.docker.com/compose/gettingstarted/#step-1-setup
+
+1. since I don't have the package.json, so I create it with
+    npm init (note: with name checktxstatusdocker)
+
+2 npm install  (note: to install all depedency)
+
+3. npm start (note: if its fail wihtout startscript, change the package.json to  script to following
+
+"scripts": {
+    "start": "node your-script.js"
+})
+
+3. now I'm able to run and can start dockerize with setup a Dockerfile to tell Docker how to build a container image for our API:
+    uses npm to install our modules and copies all of the files for our API into the container image.
+    ------------------------------------------------
+    FROM node:latest
+
+    RUN mkdir -p /usr/src/app  
+    WORKDIR /usr/src/app  
+    COPY . /usr/src/app
+
+    EXPOSE 3000  
+    RUN npm install  
+    CMD ["npm", "start"]  
+
+4. let's setup/create a Docker Compose configuration file 'docker-compose.yml' that will launch our API
+
+5. docker-compose build (noted fail on windows vscode bash and powershell,But ok if run in Git Bash shell!! )
+
+    checking only docker ps -a, docker version to see if docker is running
+
+6. docker-compose up    [Note: if not able to run and find web3]
+                        Run > npm install web3 --save, 
+                        and then re-run> npm install --save module
+                        then add the .dockerignore  [with modules/*]
+                        docker-compose build  (run in the Git shell)
+                        Then run docker-compose up  (in Git shell too!!!!)
+docker ps -a or docker images to see what process is running
+
+Clean up resources:
+- docker-compose stop
+- docker-compose down
+- docker images

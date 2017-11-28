@@ -20,9 +20,9 @@ rectory [C:\Github-MyWork\Quorum7nodesAzFn\build\binding.vcxproj]
 var Web3 = require('web3');
 var web3 = new Web3()
 //web3.setProvider(new web3.providers.HttpProvider('http://quorumdemo7nodes.eastasia.cloudapp.azure.com:22000', 0, BasicAuthUsername, BasicAuthPassword));
-web3.setProvider(new web3.providers.HttpProvider('http://quorumdemo7nodes.eastasia.cloudapp.azure.com:22000'));
+///web3.setProvider(new web3.providers.HttpProvider('http://quorumdemo7nodes.eastasia.cloudapp.azure.com:22000'));
 ///console.log(web3.eth)
-var coinbase = web3.eth.coinbase;
+///var coinbase = web3.eth.coinbase;
 
 // create the RESTful api using express
 var express = require('express'),
@@ -36,6 +36,7 @@ var server = app.listen(port, function () {
 
 app.post('/checkTx', function(req, res) {
     try {
+        web3.setProvider(new web3.providers.HttpProvider(req.query.Quorum7nodes));
         /* //Testing only
         var tx = web3.eth.getTransaction('0x4095ec6359c7298447317aa4c05f08a3bc34345be9ecdd342439f487a1251453').then( function (TX) {
              console.log("TX: ", TX);
