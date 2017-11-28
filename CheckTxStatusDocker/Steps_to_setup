@@ -44,3 +44,27 @@ Clean up resources:
 - docker-compose stop
 - docker-compose down
 - docker images
+============================================================
+Register to Azure Containre Registry  NoteL dont use Azure CLI to do it either on bash on cloud shell, it will fail
+you may refer the step from AzContainerRegistryDemo's Quick start on Azure Portal
+Azure Portal:
+- Now create the docker registrt in Az Portal wiht name AzContainerRegistryDemo
+
+-------------
+
+On my Bash wdam@MSHK5377301C MINGW64 /c/Github-MyWork/Quorum7nodesAzFn/CheckTxStatusDocker (master)
+ogin to your container registry:
+- docker login azcontainerregistrydemo.azurecr.io
+    username: AzContainerRegistryDemo
+    password: 8D3IL4MLo0QZpMjMK1=h51jw1ozpN9uN
+
+Push to your registry:
+- docker tag checktxstatusdocker_inventory azcontainerregistrydemo.azurecr.io/checktxstatusdocker_inventory
+- docker push azcontainerregistrydemo.azurecr.io/checktxstatusdocker_inventory
+
+
+Pull from your registry
+- docker pull azcontainerregistrydemo.azurecr.io/checktxstatusdocker_inventory
+
+
+az acr show --name AzContainerRegistryDemo --query loginServer
