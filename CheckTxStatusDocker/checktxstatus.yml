@@ -1,0 +1,39 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: checktxstatusdocker
+spec:
+  replicas: 2
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  minReadySeconds: 5 
+  template:
+    metadata:
+      labels:
+        app: checktxstatusdocker
+    spec:
+      containers:
+      - name: checktxstatusdocker
+        image: azcontainerregistrydemo.azurecr.io/checktxstatusdocker_inventory
+        ports:
+        - containerPort: 3000
+        resources:
+          requests:
+            cpu: 250m
+          limits:
+            cpu: 500m
+        env:
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: checktxstatusdocker
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 3000
+  selector:
+    app: checktxstatusdocker

@@ -45,10 +45,10 @@ Clean up resources:
 - docker-compose down
 - docker images
 ============================================================
-Register to Azure Containre Registry  NoteL dont use Azure CLI to do it either on bash on cloud shell, it will fail
+Register to Azure Containre Registry  Note: dont use Azure CLI to do it either on bash on cloud shell, it will fail
 you may refer the step from AzContainerRegistryDemo's Quick start on Azure Portal
 Azure Portal:
-- Now create the docker registrt in Az Portal wiht name AzContainerRegistryDemo
+- Now create the docker registrt in Az Portal with name AzContainerRegistryDemo
 
 -------------
 
@@ -67,4 +67,143 @@ Pull from your registry
 - docker pull azcontainerregistrydemo.azurecr.io/checktxstatusdocker_inventory
 
 
+=====Now use the Azure Cloud shell for all below cmd!!!!!==========
+Now we can check the registry on Azure cloud shell and should see the image
+- az acr repository list --name azcontainerregistrydemo --output table
+
+    Result
+    -----------------------------
+    checktxstatusdocker_inventory
+
+
 az acr show --name AzContainerRegistryDemo --query loginServer
+============================================================================
+- Create Kurebenete Cluster on Azure thru AKS (AKSK8Cluster)
+    - https://docs.microsoft.com/en-us/azure/container-service/kubernetes/container-service-kubernetes-service-principal
+    on Azure cloud shell:
+    az login
+
+    az account set --subscription "851da8fc-5b5f-48f2-9e14-395ce8ace4bf"
+
+    az group create --name "AKSK8ClusterRG" --location "centralus"
+
+    az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/851da8fc-5b5f-48f2-9e14-395ce8ace4bf"
+
+    And some how this RG, mc_aksk8clusterrg_aksk8cluster_centralus is created after it.  so wenow have these 
+    RG: 
+        - AzContainerRG (for ACR, AzureContainerRegistryDemo)
+        - AKSK8ClusterRG (for K8Cluster)
+        - MC_AKSK8ClusterRG_AKSK8Cluster_centralus (after the AKSK8Cluster is created)
+- Run applications in Kubernetes [https://docs.microsoft.com/en-us/azure/container-service/kubernetes/container-service-tutorial-kubernetes-deploy-application]
+    - Azure Container Registry (ACR) has been used to store a container image. 
+      Before running the application, the ACR login server name needs to be updated in the Kubernetes manifest file.
+      On Azure Cloud shell run the following
+
+      az acr list --resource-group AzContainerRG --query "[].{acrLoginServer:loginServer}" --output table
+
+      and you should see
+      AcrLoginServer
+      ----------------------------------
+      azcontainerregistrydemo.azurecr.io
+
+      az acr repository list --name azcontainerregistrydemo --output table
+     
+    To configure kubectl to connect to your Kubernetes cluster, run the az acs kubernetes get-credentials command. 
+    Not use this one: https://docs.microsoft.com/en-us/azure/container-service/kubernetes/container-service-tutorial-kubernetes-deploy-cluster
+    use this one: https://docs.microsoft.com/en-us/azure/aks/
+                  https://azure.microsoft.com/en-us/blog/introducing-azure-container-service-aks-managed-kubernetes-and-azure-container-registry-geo-replication/
+    !!Since I use the AKS managed service instead, can't straighly follow the k8deploycluster link above. As the resource group is under managedservice for my case
+    - az aks get-credentials -g AKSK8ClusterRG -n AKSK8Cluster
+
+    - kubectl get nodes
+    and I only see agentpool and no master and agent node? and if try 'kubectl version', should see its connected otherwise conenction refused msg will be displayed
+    NAME                       STATUS    ROLES     AGE       VERSION
+    aks-agentpool-17368868-0   Ready     agent     1h        v1.7.7
+    
+    Run application in Azure Container Service, AKS managed service
+    - get the ACR login server or lookat the AzContainerRegistryDemo - Access keys from the Az Portal
+      az acr list --resource-group AzContainerRG --query "[].{acrLoginServer:loginServer}" --output table
+
+      AcrLoginServer
+      ----------------------------------
+      azcontainerregistrydemo.azurecr.io
+
+    - create the yml file, => copy/paste the checktxstatus.yml to Azure colud shell using vi command
+      Ref: 
+        containers:
+        - name: checktxstatusdocker_inventory
+        image: azcontainerregistrydemo.azurecr.io/checktxstatusdocker_inventory
+
+    Help on vi command: 
+        insert Shift + i
+        Esc then type :wq! + Enter to safe and quit
+
+    - kubectl create -f checktxstatus.yml --validate=false
+
+        you should see......
+        deployment "checktxstatusdocker" created
+        service "checktxstatusdocker" created
+
+    - if you need to delete the deployment 
+        kubectl delete deployment checktxstatusdocker
+
+Checking:
+    - kubectl get service checktxstatusdocker --watch
+
+        NAME                  TYPE           CLUSTER-IP    EXTERNAL-IP      PORT(S)          AGE
+        checktxstatusdocker   LoadBalancer   10.0.207.30   52.173.139.103   3000:31685/TCP   2m
+
+    - kubectl get pods 
+
+        NAME                                  READY     STATUS             RESTARTS   AGE
+        checktxstatusdocker-308145597-qhddt   0/1       ImagePullBackOff   0          53m
+        checktxstatusdocker-308145597-xw27w   0/1       ImagePullBackOff   0          53m
+
+Manual scale: (from 2 to 3 pod)
+    - kubectl scale --replicas=3 deployment/checktxstatusdocker
+
+    william@Azure:~$ kubectl get pods
+    NAME                                  READY     STATUS             RESTARTS   AGE
+    checktxstatusdocker-308145597-qhddt   0/1       ImagePullBackOff   0          57m
+    checktxstatusdocker-308145597-rlfh3   0/1       ErrImagePull       0          6s
+    checktxstatusdocker-308145597-xw27w   0/1       ImagePullBackOff   0          57m    
+
+Autoscale pods: (Horizontal Pod Autoscaling)
+    - kubectl autoscale deployment checktxstatusdocker --cpu-percent=50 --min=3 --max=10    
+
+    william@Azure:~$ kubectl autoscale deployment checktxstatusdocker --cpu-percent=50 --min=3 --max=10
+    deployment "checktxstatusdocker" autoscaled
+    
+    To see the status of the autoscaler
+    - kubectl get hpa
+
+    NAME                  REFERENCE                        TARGETS           MINPODS   MAXPODS   REPLICAS   AGE
+    checktxstatusdocker   Deployment/checktxstatusdocker   <unknown> / 50%   3         10        3          59s
+
+[Ignore!!] Scale the agents: [Not in AKS, and below is in ACS only]
+    - az acs scale --resource-group=AKSK8ClusterRG --name=AKSK8SCluster --new-agent-count 2
+
+Container Monitoring:
+https://docs.microsoft.com/en-us/azure/aks/tutorial-kubernetes-monitor 
+    - use vi on Azure Cloud shell to create a file: vi oms_daemonset.yml (copy its from CheclTxStatusDocker/oms_daemonset.yml)
+    - kubectl create -f oms_daemonset.yml
+    - kubectl get daemonset
+    .....After the agents are running, it takes several minutes for OMS to ingest and process the data.
+
+debugging a down/unreachable node:  
+https://v1-7.docs.kubernetes.io/docs/tasks/debug-application-cluster/debug-application/
+    - kubectl get nodes
+    - kubectl describe node aks-agentpool-17368868-0 
+
+    - kubectl get pods
+    - kubectl describe pods checktxstatusdocker-308145597-qhddt
+
+       >  my pod stays show pending and further erro msg -> Failed to pull image "microsoftazcontainerregistrydemo.azurecr.io/checktxstatusdocker_inventory": rpc error: code = 2 desc = Error response from daemon: {"message":"Get https://microsoftazcontainerregistrydemo.azurecr.io/v1/_ping: dial tcp: lookup microsoftazcontainerregistrydemo.azurecr.io on 168.63.129.16:53: no such host"}
+       > No such host fix : 
+            https://linuxconfig.org/docker-dial-tcp-lookup-index-docker-io-no-such-host-fix 
+            https://github.com/moby/moby/issues/18842
+       the error shown the provider name incorrect remove microsoft in the checktxstatus.yml and run kubectl delete and create again will make it work!!!
+
+
+    
+
